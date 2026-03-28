@@ -1,0 +1,139 @@
+<div style="max-width: 900px; margin: auto; font-family: sans-serif;">
+  <h2>Laporan Stock Master</h2>
+  
+  <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+    <button onclick="muatUlangDataStock()" style="padding: 8px 15px; cursor: pointer; background-color: #008CBA; color: white; border: none; border-radius: 4px;">🔄 Refresh</button>
+    
+    <input type="text" id="inputCariStock" placeholder="Cari Nama Barang..." 
+           onkeyup="resetKeHalamanSatu()" style="padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px;">
+           
+    <select id="pilihanSortir" onchange="terapkanFilterStock()" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+      <option value="nama_asc">A-Z</option>
+      <option value="nama_desc">Z-A</option>
+      <option value="stok_asc">Stok Terkecil</option>
+      <option value="stok_desc">Stok Terbesar</option>
+    </select>
+
+    <select id="limitData" onchange="resetKeHalamanSatu()" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9;">
+      <option value="20">Tampilkan 20</option>
+      <option value="50">Tampilkan 50</option>
+      <option value="100">Tampilkan 100</option>
+      <option value="all">Semua</option>
+    </select>
+  </div>
+
+  <div id="statusLoadingStock" style="color: blue; margin-bottom: 10px;">Memuat data...</div>
+
+  <table border="1" style="width: 100%; border-collapse: collapse; text-align: left;" id="tabelLapStock">
+    <thead style="background-color: #f2f2f2;">
+      <tr>
+        <th style="padding: 10px; border: 1px solid #ddd;">Nama Barang</th>
+        <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Masuk</th>
+        <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Keluar</th>
+        <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Rusak</th>
+        <th style="padding: 10px; border: 1px solid #ddd; text-align: center; background-color: #e8f5e9;">Tersedia</th>
+      </tr>
+    </thead>
+    <tbody id="bodyTabelStock"></tbody>
+  </table>
+
+  <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+    <div id="infoHalaman" style="font-size: 0.9em; color: #666;"></div>
+    <div style="display: flex; gap: 5px;">
+      <button onclick="ubahHalaman(-1)" id="btnPrev" style="padding: 5px 10px; cursor: pointer;">Sebelumnya</button>
+      <button onclick="ubahHalaman(1)" id="btnNext" style="padding: 5px 10px; cursor: pointer;">Berikutnya</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let dataStockGlobal = [];
+  let halamanSekarang = 1;
+
+  function muatUlangDataStock() {
+    document.getElementById('statusLoadingStock').style.display = 'block';
+    google.script.run
+      .withSuccessHandler(function(data) {
+        dataStockGlobal = data;
+        halamanSekarang = 1;
+        terapkanFilterStock(); 
+        document.getElementById('statusLoadingStock').style.display = 'none';
+      })
+      .ambilDataStock();
+  }
+
+  function resetKeHalamanSatu() {
+    halamanSekarang = 1;
+    terapkanFilterStock();
+  }
+
+  function ubahHalaman(arah) {
+    halamanSekarang += arah;
+    terapkanFilterStock();
+  }
+
+  function terapkanFilterStock() {
+    let kataKunci = document.getElementById('inputCariStock').value.toLowerCase();
+    let metodeSortir = document.getElementById('pilihanSortir').value;
+    let limit = document.getElementById('limitData').value;
+    
+    // 1. Filter
+    let dataTerfilter = dataStockGlobal.filter(item => {
+      let nama = (item.namaBarang || "").toString().toLowerCase();
+      return nama.includes(kataKunci);
+    });
+
+    // 2. Sortir
+    dataTerfilter.sort((a, b) => {
+      let namaA = (a.namaBarang || "").toString();
+      let namaB = (b.namaBarang || "").toString();
+      let stokA = parseFloat(a.tersedia) || 0;
+      let stokB = parseFloat(b.tersedia) || 0;
+
+      if (metodeSortir === 'nama_asc') return namaA.localeCompare(namaB);
+      if (metodeSortir === 'nama_desc') return namaB.localeCompare(namaA);
+      if (metodeSortir === 'stok_asc') return stokA - stokB;
+      if (metodeSortir === 'stok_desc') return stokB - stokA;
+    });
+
+    // 3. Pagination Logic
+    let totalData = dataTerfilter.length;
+    let perHalaman = limit === 'all' ? totalData : parseInt(limit);
+    let totalHalaman = Math.ceil(totalData / perHalaman) || 1;
+    
+    // Keamanan navigasi
+    if (halamanSekarang > totalHalaman) halamanSekarang = totalHalaman;
+    if (halamanSekarang < 1) halamanSekarang = 1;
+
+    let mulai = (halamanSekarang - 1) * perHalaman;
+    let dataTampil = dataTerfilter.slice(mulai, mulai + perHalaman);
+
+    // 4. Render Tabel
+    let barisHtml = '';
+    if (dataTampil.length === 0) {
+      barisHtml = '<tr><td colspan="5" style="text-align:center; padding: 15px;">Data tidak ditemukan.</td></tr>';
+    } else {
+      dataTampil.forEach(item => {
+        let stokAngka = parseFloat(item.tersedia) || 0;
+        let styleStok = stokAngka <= 5 ? 'color: red; font-weight: bold;' : 'font-weight: bold;';
+        barisHtml += `
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;">${item.namaBarang || ""}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.masuk || "0"}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.keluar || "0"}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${item.rusak || "0"}</td>
+            <td style="padding: 8px; border: 1px solid #ddd; text-align: center; ${styleStok}">${stokAngka}</td>
+          </tr>`;
+      });
+    }
+    
+    document.getElementById('bodyTabelStock').innerHTML = barisHtml;
+
+    // 5. Update UI Navigasi
+    document.getElementById('infoHalaman').innerText = `Menampilkan ${mulai + 1}-${Math.min(mulai + perHalaman, totalData)} dari ${totalData} barang (Hal ${halamanSekarang}/${totalHalaman})`;
+    document.getElementById('btnPrev').disabled = (halamanSekarang === 1);
+    document.getElementById('btnNext').disabled = (halamanSekarang === totalHalaman || limit === 'all');
+  }
+
+  setTimeout(muatUlangDataStock, 500); 
+</script>

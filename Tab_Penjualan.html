@@ -1,0 +1,18 @@
+<h2>Form Penjualan</h2>
+<form id="formPenjualan" onsubmit="prosesPenjualan(event)">
+  <button type="submit">Simpan Transaksi</button>
+  <button type="button" onclick="cetakNota()" id="btnCetak" disabled>Cetak Nota</button>
+</form>
+
+<script>
+  function prosesPenjualan(e) {
+    e.preventDefault();
+    // Panggil google.script.run.simpanPenjualan()
+    // Jika sukses, aktifkan tombol Cetak Nota
+  }
+  
+  function cetakNota() {
+    // Buka jendela baru dengan format nota (bisa memanggil file Cetak_Nota.html)
+    window.open('URL_WEB_APP_KAMU?page=nota&id=ID_TRANSAKSI', '_blank');
+  }
+</script>

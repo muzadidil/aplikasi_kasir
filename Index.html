@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      .tab-content { display: none; padding: 20px; }
+      .tab-content.active { display: block; }
+      nav button { margin-right: 5px; padding: 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+
+    <nav>
+      <button onclick="bukaTab('Penjualan')">Penjualan</button>
+      <button onclick="bukaTab('Pembelian')">Pembelian</button>
+      <button onclick="bukaTab('Pelanggan')">Tambah Pelanggan</button>
+      <button onclick="bukaTab('Barang')">Tambah Barang</button>
+      <button onclick="bukaTab('LapStock')">Laporan Stock</button>
+      <button onclick="bukaTab('LapPembelian')">Laporan Pembelian</button>
+      <button onclick="bukaTab('LapRetur')">Laporan Retur</button>
+      <button onclick="bukaTab('LapPenjualan')">Laporan Penjualan</button>
+    </nav>
+
+    <div id="Penjualan" class="tab-content active">
+      <?!= include('Tab_Penjualan'); ?>
+    </div>
+    
+    <div id="Pembelian" class="tab-content">
+      <?!= include('Tab_Pembelian'); ?>
+    </div>
+
+    <div id="Pelanggan" class="tab-content">
+      <?!= include('Tab_Pelanggan'); ?>
+    </div>
+
+    <div id="Barang" class="tab-content">
+      <?!= include('Tab_Barang'); ?>
+    </div>
+
+    <div id="LapStock" class="tab-content">
+      <?!= include('Tab_LapStock'); ?>
+    </div>
+
+    <div id="LapPembelian" class="tab-content">
+      <?!= include('Tab_LapPembelian'); ?>
+    </div>
+
+    <div id="LapRetur" class="tab-content">
+      <?!= include('Tab_LapRetur'); ?>
+    </div>
+
+    <div id="LapPenjualan" class="tab-content">
+      <?!= include('Tab_LapPenjualan'); ?>
+    </div>
+
+    <script>
+      // Logika untuk berpindah tab
+      function bukaTab(idTab) {
+        var tabs = document.getElementsByClassName('tab-content');
+        for (var i = 0; i < tabs.length; i++) {
+          tabs[i].classList.remove('active');
+        }
+        document.getElementById(idTab).classList.add('active');
+      }
+    </script>
+  </body>
+</html>

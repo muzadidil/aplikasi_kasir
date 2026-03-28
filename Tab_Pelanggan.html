@@ -1,0 +1,47 @@
+<div style="max-width: 500px; margin: auto;">
+  <h2>Tambah Pelanggan Baru</h2>
+  <form id="formTambahPelanggan" onsubmit="submitPelanggan(event)">
+    
+    <label>Nama Pelanggan:</label><br>
+    <input type="text" id="namaPelanggan" required style="width: 100%; margin-bottom: 10px;"><br>
+
+    <label>No. HP / WhatsApp:</label><br>
+    <input type="text" id="noHp" required style="width: 100%; margin-bottom: 10px;"><br>
+
+    <label>Alamat:</label><br>
+    <textarea id="alamat" rows="3" required style="width: 100%; margin-bottom: 20px;"></textarea><br>
+
+    <button type="submit" id="btnSimpanPelanggan" style="padding: 10px 20px; cursor: pointer;">Simpan Pelanggan</button>
+    <span id="statusPelanggan" style="margin-left: 10px; color: green;"></span>
+  </form>
+</div>
+
+<script>
+  function submitPelanggan(e) {
+    e.preventDefault();
+    document.getElementById('btnSimpanPelanggan').disabled = true;
+    document.getElementById('statusPelanggan').innerText = "Menyimpan...";
+
+    // Ambil data dari form
+    const dataPelanggan = {
+      namaPelanggan: document.getElementById('namaPelanggan').value,
+      noHp: document.getElementById('noHp').value,
+      alamat: document.getElementById('alamat').value
+    };
+
+    // Kirim ke backend (API_Master.gs)
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.success) {
+          document.getElementById('statusPelanggan').innerText = response.message;
+          document.getElementById('formTambahPelanggan').reset();
+        } else {
+          document.getElementById('statusPelanggan').style.color = "red";
+          document.getElementById('statusPelanggan').innerText = "Gagal: " + response.message;
+        }
+        document.getElementById('btnSimpanPelanggan').disabled = false;
+        setTimeout(() => document.getElementById('statusPelanggan').innerText = "", 3000);
+      })
+      .simpanPelangganBaru(dataPelanggan);
+  }
+</script>

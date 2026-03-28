@@ -1,0 +1,64 @@
+<div style="max-width: 500px; margin: auto;">
+  <h2>Tambah Barang Baru</h2>
+  <form id="formTambahBarang" onsubmit="submitBarang(event)">
+    
+    <label>Kode / Barcode Barang:</label><br>
+    <input type="text" id="kodeBarang" required style="width: 100%; margin-bottom: 10px;" placeholder="Contoh: BRG-001 atau 00123"><br>
+
+    <label>Nama Barang:</label><br>
+    <input type="text" id="namaBarang" required style="width: 100%; margin-bottom: 10px;"><br>
+
+    <label>Kategori:</label><br>
+    <input type="text" id="kategori" required style="width: 100%; margin-bottom: 10px;"><br>
+
+    <label>Unit / Satuan:</label><br>
+    <input type="text" id="unit" required style="width: 100%; margin-bottom: 10px;" placeholder="Contoh: Pcs, Box, Pack"><br>
+
+    <label>Harga Jual (Rp):</label><br>
+    <input type="number" id="hargaJual" required style="width: 100%; margin-bottom: 10px;"><br>
+
+    <label>Harga Beli (Rp):</label><br>
+    <input type="number" id="hargaBeli" required style="width: 100%; margin-bottom: 20px;"><br>
+
+    <button type="submit" id="btnSimpanBarang" style="padding: 10px 20px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 4px;">Simpan Barang</button>
+    <span id="statusBarang" style="margin-left: 10px; font-weight: bold;"></span>
+  </form>
+</div>
+
+<script>
+  function submitBarang(e) {
+    e.preventDefault();
+    document.getElementById('btnSimpanBarang').disabled = true;
+    document.getElementById('statusBarang').innerText = "Menyimpan data...";
+    document.getElementById('statusBarang').style.color = "blue";
+
+    // Ambil data dari form HTML (Stock Awal dihapus)
+    const dataBarang = {
+      kodeBarang: document.getElementById('kodeBarang').value,
+      namaBarang: document.getElementById('namaBarang').value,
+      kategori: document.getElementById('kategori').value,
+      unit: document.getElementById('unit').value,
+      hargaJual: document.getElementById('hargaJual').value,
+      hargaBeli: document.getElementById('hargaBeli').value
+    };
+
+    // Kirim data ke backend (API_Master.gs)
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if(response.success) {
+          document.getElementById('statusBarang').style.color = "green";
+          document.getElementById('statusBarang').innerText = response.message;
+          document.getElementById('formTambahBarang').reset(); 
+        } else {
+          document.getElementById('statusBarang').style.color = "red";
+          document.getElementById('statusBarang').innerText = "Gagal: " + response.message;
+        }
+        document.getElementById('btnSimpanBarang').disabled = false;
+        
+        setTimeout(() => {
+          document.getElementById('statusBarang').innerText = "";
+        }, 3000);
+      })
+      .simpanBarangBaru(dataBarang);
+  }
+</script>
