@@ -1,18 +1,51 @@
 <h2>Form Penjualan</h2>
 <form id="formPenjualan" onsubmit="prosesPenjualan(event)">
-  <button type="submit">Simpan Transaksi</button>
+  
+  <label for="namaBarang">Nama Barang:</label><br>
+  <input type="text" id="namaBarang" name="namaBarang" required><br><br>
+
+  <label for="jumlah">Jumlah:</label><br>
+  <input type="number" id="jumlah" name="jumlah" required><br><br>
+
+  <button type="submit" id="btnSimpan">Simpan Transaksi</button>
   <button type="button" onclick="cetakNota()" id="btnCetak" disabled>Cetak Nota</button>
 </form>
 
 <script>
+  let idTransaksiGlobal = "";
+
   function prosesPenjualan(e) {
-    e.preventDefault();
-    // Panggil google.script.run.simpanPenjualan()
-    // Jika sukses, aktifkan tombol Cetak Nota
+    e.preventDefault(); 
+    
+    const form = document.getElementById('formPenjualan');
+    const btnSimpan = document.getElementById('btnSimpan');
+    
+    btnSimpan.innerText = "Menyimpan..."; 
+    btnSimpan.disabled = true; 
+
+    // Memanggil fungsi di API_Penjualan.gs
+    google.script.run
+      .withSuccessHandler(function(idTransaksiBaru) {
+        alert("Data berhasil disimpan! ID: " + idTransaksiBaru);
+        idTransaksiGlobal = idTransaksiBaru; 
+        document.getElementById('btnCetak').disabled = false; 
+        
+        form.reset(); 
+        btnSimpan.innerText = "Simpan Transaksi";
+        btnSimpan.disabled = false;
+      })
+      .withFailureHandler(function(error) {
+        alert("Gagal menyimpan: " + error.message);
+        btnSimpan.innerText = "Simpan Transaksi";
+        btnSimpan.disabled = false;
+      })
+      .simpanPenjualan(form); 
   }
   
   function cetakNota() {
-    // Buka jendela baru dengan format nota (bisa memanggil file Cetak_Nota.html)
-    window.open('URL_WEB_APP_KAMU?page=nota&id=ID_TRANSAKSI', '_blank');
+    if (idTransaksiGlobal !== "") {
+      // Nanti ganti URL_WEB_APP_KAMU dengan link Web App kamu
+      window.open('https://script.google.com/macros/s/AKfycbyFBEEP4TFf0bGQRUkU0UXTt8Sd4KskMgay4K2Fv2Aii3-nEuen-UVHNNXz7-6x/exec?page=nota&id=' + idTransaksiGlobal, '_blank');
+    }
   }
 </script>

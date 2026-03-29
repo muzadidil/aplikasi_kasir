@@ -1,70 +1,68 @@
 const SPREADSHEET_ID = '1J_q7PBRkRF5JaEtbadxMrO6NbnYFue02P5SNEEEjaSo';
 
-// --- FUNGSI TAMBAH BARANG (PART MASTER) ---
-function simpanBarangBaru(data) {
-  try {
-    const ss = SpreadsheetApp.openById('1J_q7PBRkRF5JaEtbadxMrO6NbnYFue02P5SNEEEjaSo');
-    const sheet = ss.getSheetByName('PART MASTER');
-    
-    const rowData = [
-      "'" + data.kodeBarang, 
-      data.namaBarang,
-      data.kategori,
-      data.unit,
-      "", // Kolom Stock dikosongkan (diisi otomatis oleh rumus/DATA ENTRY)
-      data.hargaJual,
-      data.hargaBeli,
-      ""  // Kolom Margin dikosongkan (diisi otomatis oleh rumus)
-    ];
-    
-    sheet.appendRow(rowData);
-    return { success: true, message: "Data barang berhasil ditambahkan ke PART MASTER!" };
-  } catch (error) {
-    return { success: false, message: error.toString() };
+/**
+ * MENGAMBIL DATA AWAL (NOTA & LIST PREDIKTIF)
+ */
+function getInitialData() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  
+  // 1. Generate Next Nota (SHAZA000001)
+  const sheetEntry = ss.getSheetByName('DATA ENTRY');
+  const lastRow = sheetEntry.getLastRow();
+  let nextNum = 1;
+  
+  if (lastRow > 1) {
+    const lastNota = sheetEntry.getRange(lastRow, 2).getValue().toString();
+    const numPart = lastNota.replace("SHAZA", "");
+    if (!isNaN(parseInt(numPart))) {
+      nextNum = parseInt(numPart) + 1;
+    }
   }
-}
-// --- FUNGSI TAMBAH PELANGGAN ---
-function simpanPelangganBaru(namaPelanggan) {
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName('CUST');
-    
-    // Sheet CUST Anda hanya berisi 1 kolom (Nama)
-    sheet.appendRow([namaPelanggan]);
-    return { success: true, message: "Pelanggan berhasil ditambahkan!" };
-  } catch (error) {
-    return { success: false, message: error.toString() };
-  }
+  const formattedNota = "SHAZA" + nextNum.toString().padStart(6, '0');
+
+  // 2. Data Customer (CUST Kolom A)
+  const sheetCust = ss.getSheetByName('CUST');
+  const custData = sheetCust.getRange("A2:A" + sheetCust.getLastRow()).getValues()
+                   .map(r => r[0]).filter(i => i !== "");
+
+  // 3. Data Barang (PART MASTER Kolom B)
+  const sheetPart = ss.getSheetByName('PART MASTER');
+  const partData = sheetPart.getRange("B2:B" + sheetPart.getLastRow()).getValues()
+                   .map(r => r[0]).filter(i => i !== "");
+
+  return {
+    nextNota: formattedNota,
+    customer: custData,
+    barang: partData
+  };
 }
 
-// --- FUNGSI SIMPAN TRANSAKSI (PENJUALAN/PEMBELIAN/RETUR) ---
-// Gunakan fungsi ini untuk SEMUA Form Transaksi Anda
+/**
+ * SIMPAN KE DATA ENTRY (11 KOLOM)
+ */
 function simpanTransaksi(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName('DATA ENTRY');
     
-    // Susun data sesuai urutan kolom DATA ENTRY: 
-    // Tanggal, Nomor Nota, Customer, No Barang, Nama Barang, Kategori, Sat, Harga, Qty, Kode Mutasi, Keterangan
-    
-    // Penting: Kode Mutasi disesuaikan dengan form yang mengirim (1=Masuk, 2=Keluar, 3=Rusak)
+    // Kolom D, F, G, H dikirim "" agar ARRAYFORMULA tidak rusak (REF!)
     const rowData = [
-      data.tanggal, 
-      data.nomorNota,
-      data.customer,
-      data.kodeBarang,
-      data.namaBarang,
-      data.kategori,
-      data.satuan,
-      data.harga,
-      data.qty,
-      data.kodeMutasi, 
-      data.keterangan
+      data.tanggal,     // A
+      data.nomorNota,   // B
+      data.customer,    // C
+      data.kodeBarang,  // D (Dikosongkan)
+      data.namaBarang,  // E
+      data.kategori,    // F (Dikosongkan)
+      data.satuan,      // G (Dikosongkan)
+      data.harga,       // H (Dikosongkan)
+      data.qty,         // I
+      data.kodeMutasi,  // J
+      data.keterangan   // K
     ];
     
     sheet.appendRow(rowData);
-    return { success: true, message: "Transaksi berhasil disimpan ke Data Entry!" };
-  } catch (error) {
-    return { success: false, message: error.toString() };
+    return true;
+  } catch (e) {
+    throw new Error("Gagal Simpan: " + e.message);
   }
 }
